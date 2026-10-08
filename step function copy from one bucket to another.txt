@@ -1,0 +1,48 @@
+import boto3
+
+s3 = boto3.client("s3")
+
+
+def lambda_handler(event, context):
+
+    source_bucket = "stepfunction-bucket-123456789guhui"
+    destination_bucket = "destination--------bucket"
+
+    # Get files from source bucket
+    response = s3.list_objects_v2(
+        Bucket=source_bucket
+    )
+
+    if "Contents" not in response:
+        print("No files found in source bucket")
+
+        return {
+            "status": "SUCCESS",
+            "message": "No files found"
+        }
+
+    # Copy every file
+    for obj in response["Contents"]:
+
+        source_key = obj["Key"]
+
+        s3.copy_object(
+            Bucket=destination_bucket,
+            Key=source_key,
+            CopySource={
+                "Bucket": source_bucket,
+                "Key": source_key
+            }
+        )
+
+        print(
+            f"Copied: s3://{source_bucket}/{source_key} "
+            f"-> s3://{destination_bucket}/{source_key}"
+        )
+
+    return {
+        "status": "SUCCESS",
+        "message": "All files copied successfully",
+        "source_bucket": source_bucket,
+        "destination_bucket": destination_bucket
+    }
